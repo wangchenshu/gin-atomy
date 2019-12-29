@@ -12,7 +12,7 @@ var Db *gorm.DB
 
 func init() {
 	var err error
-	Db, err = gorm.Open("mysql", `root:123456@tcp(127.0.0.1:3306)/eco?charset=utf8`)
+	Db, err = gorm.Open("mysql", `root:123456@tcp(127.0.0.1:3306)/atomy?charset=utf8`)
 
 	if err != nil {
 		log.Panicln("err:", err.Error())
