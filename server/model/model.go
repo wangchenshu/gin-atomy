@@ -23,7 +23,7 @@ type Carts struct {
 	Username    string `json:"username" gorm:"type:varchar(50)"`
 	ProductName string `json:"product_name" gorm:"type:varchar(255)"`
 	Qty         int    `json:"qty"`
-	Price       int    `json:"price"`
+	Price       string `json:"price" gorm:"type:varchar(100)"`
 }
 
 // Orders

@@ -3,6 +3,7 @@ package products
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/line/line-bot-sdk-go/linebot"
@@ -36,79 +37,55 @@ func GetAtomyProducts() gin.HandlerFunc {
 				imageURL2 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c"
 				imageURL3 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b"
 
+				profile, err := myBot.GetProfile(event.Source.UserID).Do()
+				if err != nil {
+					log.Print(err)
+				}
+
 				switch message := event.Message.(type) {
 				case *linebot.TextMessage:
 					switch message.Text {
 					case "+1,香烤海苔(小片裝)":
+						replyMsg := "+1 失敗"
+						if addCarts(profile.DisplayName, "香烤海苔(小片裝)", 1) {
+							replyMsg = " 香烤海苔(小片裝) +1成功"
+						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTextMessage("香烤海苔(小片裝) +1成功"),
-							linebot.NewTextMessage("過年團購商品").
-								WithQuickReplies(linebot.NewQuickReplyItems(
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("查看團購商品", "過年團購")),
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-									linebot.NewQuickReplyButton(
-										imageURL2,
-										linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-									linebot.NewQuickReplyButton(
-										imageURL3,
-										linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-								)),
+							linebot.NewTextMessage(profile.DisplayName+replyMsg),
+							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
+
 					case "+1,幸福堅果":
+						replyMsg := "+1 失敗"
+						if addCarts(profile.DisplayName, "幸福堅果", 1) {
+							replyMsg = " 幸福堅果 +1成功"
+						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTextMessage("幸福堅果 +1成功"),
-							linebot.NewTextMessage("過年團購商品").
-								WithQuickReplies(linebot.NewQuickReplyItems(
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("查看團購商品", "過年團購")),
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-									linebot.NewQuickReplyButton(
-										imageURL2,
-										linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-									linebot.NewQuickReplyButton(
-										imageURL3,
-										linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-								)),
+							linebot.NewTextMessage(profile.DisplayName+replyMsg),
+							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
 					case "+1,好纖果乾":
+						replyMsg := "+1 失敗"
+						if addCarts(profile.DisplayName, "好纖果乾", 1) {
+							replyMsg = " 好纖果乾 +1成功"
+						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTextMessage("好纖果乾 +1成功"),
-							linebot.NewTextMessage("過年團購商品").
-								WithQuickReplies(linebot.NewQuickReplyItems(
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("查看團購商品", "過年團購")),
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-									linebot.NewQuickReplyButton(
-										imageURL2,
-										linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-									linebot.NewQuickReplyButton(
-										imageURL3,
-										linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-								)),
+							linebot.NewTextMessage(profile.DisplayName+replyMsg),
+							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
 					case "過年團購":
-						products_1 := getGroupBuy("香烤海苔(小片裝)")
-						products_2 := getGroupBuy("幸福堅果")
-						products_3 := getGroupBuy("好纖果乾")
+						products_1 := getProductLike("香烤海苔(小片裝)")
+						products_2 := getProductLike("幸福堅果")
+						products_3 := getProductLike("好纖果乾")
 
 						template := linebot.NewCarouselTemplate(
 							linebot.NewCarouselColumn(
@@ -127,23 +104,42 @@ func GetAtomyProducts() gin.HandlerFunc {
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
 							linebot.NewTemplateMessage("團購人氣商品", template),
-							linebot.NewTextMessage("年節團購商品").
-								WithQuickReplies(linebot.NewQuickReplyItems(
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("查看團購商品", "過年團購")),
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-									linebot.NewQuickReplyButton(
-										imageURL2,
-										linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-									linebot.NewQuickReplyButton(
-										imageURL3,
-										linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-								)),
+							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
+						}
+					case "查看購物車":
+						carts := getCartsByUsername(profile.DisplayName)
+						repMsg := "目前購物車有: \n\n"
+						totalPrice := 0
+
+						for _, cart := range carts {
+							cartQtyStr := fmt.Sprintf("%d", cart.Qty)
+							repMsg += cart.ProductName + ", 價格: $" + cart.Price + ", 數量: " + cartQtyStr + "\n"
+							cartPrice, err := strconv.ParseInt(cart.Price, 10, 64)
+							if err == nil {
+								fmt.Println(cartPrice)
+							}
+							totalPrice += int(cartPrice) * cart.Qty
+						}
+						repMsg += "\n總計: $ " + fmt.Sprintf("%d", totalPrice) + "\n"
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							linebot.NewTextMessage(repMsg),
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
+					case "清除購物車":
+						if clearCarts(profile.DisplayName) {
+							repMsg := "清除成功"
+							if _, err := myBot.ReplyMessage(
+								event.ReplyToken,
+								linebot.NewTextMessage(repMsg),
+								myQuickReply(),
+							).Do(); err != nil {
+								log.Print(err)
+							}
 						}
 					default:
 						repMsg := "艾多美商品: \n\n"
@@ -167,21 +163,7 @@ func GetAtomyProducts() gin.HandlerFunc {
 							event.ReplyToken,
 							linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", template),
 							linebot.NewTextMessage(repMsg),
-							linebot.NewTextMessage("過年團購商品").
-								WithQuickReplies(linebot.NewQuickReplyItems(
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("查看團購商品", "過年團購")),
-									linebot.NewQuickReplyButton(
-										imageURL1,
-										linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-									linebot.NewQuickReplyButton(
-										imageURL2,
-										linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-									linebot.NewQuickReplyButton(
-										imageURL3,
-										linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-								)),
+							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
@@ -225,11 +207,71 @@ func getProductsLike(name string, limit int) []model.Products {
 	return products
 }
 
-func getGroupBuy(name string) model.Products {
+func getProductLike(name string) model.Products {
 	product := model.Products{}
 	db.Db.Where("name LIKE ?", "%"+name+"%").First(&product)
 
 	return product
+}
+
+func myQuickReply() linebot.SendingMessage {
+	imageURL1 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9"
+	imageURL2 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c"
+	imageURL3 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b"
+	imageURL4 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b"
+
+	quickReply := linebot.NewTextMessage("過年團購商品").
+		WithQuickReplies(linebot.NewQuickReplyItems(
+			linebot.NewQuickReplyButton(
+				imageURL4,
+				linebot.NewMessageAction("查看購物車", "查看購物車")),
+			linebot.NewQuickReplyButton(
+				imageURL1,
+				linebot.NewMessageAction("查看團購商品", "過年團購")),
+			linebot.NewQuickReplyButton(
+				imageURL1,
+				linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
+			linebot.NewQuickReplyButton(
+				imageURL2,
+				linebot.NewMessageAction("幸福堅果", "幸福堅果")),
+			linebot.NewQuickReplyButton(
+				imageURL3,
+				linebot.NewMessageAction("好纖果乾", "好纖果乾")),
+			linebot.NewQuickReplyButton(
+				imageURL4,
+				linebot.NewMessageAction("清除購物車", "清除購物車")),
+		))
+
+	return quickReply
+}
+
+func addCarts(username string, productName string, qty int) bool {
+	carts := model.Carts{}
+	product := getProductLike(productName)
+
+	if product.ID != 0 {
+		carts.Username = username
+		carts.ProductName = product.Name
+		carts.Qty = qty
+		carts.Price = product.Price
+
+		db.Db.Create(&carts)
+		return true
+	}
+
+	return false
+}
+
+func getCartsByUsername(username string) []model.Carts {
+	carts := []model.Carts{}
+	db.Db.Where("username = ?", username).Find(&carts)
+
+	return carts
+}
+
+func clearCarts(username string) bool {
+	db.Db.Delete(model.Carts{}, "username = ?", username)
+	return true
 }
 
 func GetProducts() gin.HandlerFunc {
