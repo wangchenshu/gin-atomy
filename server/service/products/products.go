@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/line/line-bot-sdk-go/linebot"
@@ -44,36 +45,18 @@ func GetAtomyProducts() gin.HandlerFunc {
 
 				switch message := event.Message.(type) {
 				case *linebot.TextMessage:
-					switch message.Text {
-					case "+1,香烤海苔(小片裝)":
-						replyMsg := "+1 失敗"
-						if addCarts(profile.DisplayName, "香烤海苔(小片裝)", 1) {
-							replyMsg = " 香烤海苔(小片裝) +1成功"
-						}
-						if _, err := myBot.ReplyMessage(
-							event.ReplyToken,
-							linebot.NewTextMessage(profile.DisplayName+replyMsg),
-							myQuickReply(),
-						).Do(); err != nil {
-							log.Print(err)
-						}
+					matchText := message.Text
+					buyProductName := ""
+					if strings.Contains(matchText, "+1") {
+						buyProductName = strings.Split(matchText, ",")[1]
+						matchText = strings.Split(matchText, ",")[0]
+					}
 
-					case "+1,幸福堅果":
+					switch matchText {
+					case "+1":
 						replyMsg := "+1 失敗"
-						if addCarts(profile.DisplayName, "幸福堅果", 1) {
-							replyMsg = " 幸福堅果 +1成功"
-						}
-						if _, err := myBot.ReplyMessage(
-							event.ReplyToken,
-							linebot.NewTextMessage(profile.DisplayName+replyMsg),
-							myQuickReply(),
-						).Do(); err != nil {
-							log.Print(err)
-						}
-					case "+1,好纖果乾":
-						replyMsg := "+1 失敗"
-						if addCarts(profile.DisplayName, "好纖果乾", 1) {
-							replyMsg = " 好纖果乾 +1成功"
+						if addCarts(profile.DisplayName, buyProductName, 1) {
+							replyMsg = " " + buyProductName + " +1 成功"
 						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
@@ -123,6 +106,9 @@ func GetAtomyProducts() gin.HandlerFunc {
 							totalPrice += int(cartPrice) * cart.Qty
 						}
 						repMsg += "\n總計: $ " + fmt.Sprintf("%d", totalPrice) + "\n"
+						if totalPrice == 0 {
+							repMsg = "購物車是空的"
+						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
 							linebot.NewTextMessage(repMsg),
@@ -150,18 +136,9 @@ func GetAtomyProducts() gin.HandlerFunc {
 							repMsg += "價格: " + product.Price + "\n"
 							repMsg += "PV: " + product.Point + "\n"
 						}
-
-						imageURL := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E8%89%BE%E4%B8%8D%E9%87%8B%E6%89%8B%E7%B6%93%E5%85%B8%E7%B3%BB%E5%88%97.jpg?alt=media&token=ebbb8e46-6d86-4229-9e29-67b4858ea0d1"
-						template := linebot.NewButtonsTemplate(
-							imageURL, "艾多美新品 Go Bot 1.0 ", "只要輸入 艾多美新品名稱",
-							linebot.NewMessageAction("艾多美 艾不釋手經典系列", "艾多美 艾不釋手經典系列"),
-							linebot.NewMessageAction("艾多美 托特包", "艾多美 托特包"),
-							linebot.NewMessageAction("艾多美 物理性防曬膏", "艾多美 物理性防曬膏"),
-							linebot.NewMessageAction("艾多美 新春紅包袋", "艾多美 新春紅包袋"),
-						)
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", template),
+							linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
 							linebot.NewTextMessage(repMsg),
 							myQuickReply(),
 						).Do(); err != nil {
@@ -214,13 +191,25 @@ func getProductLike(name string) model.Products {
 	return product
 }
 
+func myMenuTemplate() *linebot.ButtonsTemplate {
+	imageURL := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E8%89%BE%E4%B8%8D%E9%87%8B%E6%89%8B%E7%B6%93%E5%85%B8%E7%B3%BB%E5%88%97.jpg?alt=media&token=ebbb8e46-6d86-4229-9e29-67b4858ea0d1"
+	menuTemplate := linebot.NewButtonsTemplate(
+		imageURL, "艾多美新品 Go Bot 1.0 ", "只要輸入 艾多美新品名稱",
+		linebot.NewMessageAction("艾多美 艾不釋手經典系列", "艾多美 艾不釋手經典系列"),
+		linebot.NewMessageAction("艾多美 托特包", "艾多美 托特包"),
+		linebot.NewMessageAction("艾多美 物理性防曬膏", "艾多美 物理性防曬膏"),
+		linebot.NewMessageAction("艾多美 新春紅包袋", "艾多美 新春紅包袋"),
+	)
+
+	return menuTemplate
+}
 func myQuickReply() linebot.SendingMessage {
 	imageURL1 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9"
 	imageURL2 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c"
 	imageURL3 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b"
 	imageURL4 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b"
 
-	quickReply := linebot.NewTextMessage("過年團購商品").
+	quickReply := linebot.NewTextMessage("快速選單").
 		WithQuickReplies(linebot.NewQuickReplyItems(
 			linebot.NewQuickReplyButton(
 				imageURL4,
