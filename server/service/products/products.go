@@ -66,27 +66,21 @@ func GetAtomyProducts() gin.HandlerFunc {
 							log.Print(err)
 						}
 					case "過年團購":
-						products_1 := getProductLike("香烤海苔(小片裝)")
-						products_2 := getProductLike("幸福堅果")
-						products_3 := getProductLike("好纖果乾")
+						groupBuyNames := []string{"香烤海苔(小片裝)", "幸福堅果", "好纖果乾"}
+						wannaBuyStr := "我想+1"
+						altText := "團購人氣商品"
+						products_1 := getProductLike(groupBuyNames[0])
+						products_2 := getProductLike(groupBuyNames[1])
+						products_3 := getProductLike(groupBuyNames[2])
 
 						template := linebot.NewCarouselTemplate(
-							linebot.NewCarouselColumn(
-								imageURL1, products_1.Name, products_1.Price,
-								linebot.NewMessageAction("我想+1", "+1,香烤海苔(小片裝)"),
-							),
-							linebot.NewCarouselColumn(
-								imageURL2, products_2.Name, products_2.Price,
-								linebot.NewMessageAction("我想+1", "+1,幸福堅果"),
-							),
-							linebot.NewCarouselColumn(
-								imageURL3, products_3.Name, products_3.Price,
-								linebot.NewMessageAction("我想+1", "+1,好纖果乾"),
-							),
+							newCarouselColumn(imageURL1, products_1.Name, products_1.Price, wannaBuyStr, "+1,"+groupBuyNames[0]),
+							newCarouselColumn(imageURL2, products_2.Name, products_2.Price, wannaBuyStr, "+1,"+groupBuyNames[1]),
+							newCarouselColumn(imageURL3, products_3.Name, products_3.Price, wannaBuyStr, "+1,"+groupBuyNames[2]),
 						)
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTemplateMessage("團購人氣商品", template),
+							linebot.NewTemplateMessage(altText, template),
 							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
@@ -94,6 +88,7 @@ func GetAtomyProducts() gin.HandlerFunc {
 					case "查看購物車":
 						carts := getCartsByUsername(profile.DisplayName)
 						repMsg := "目前購物車有: \n\n"
+						cartIsEmpty := "購物車是空的"
 						totalPrice := 0
 
 						for _, cart := range carts {
@@ -107,7 +102,7 @@ func GetAtomyProducts() gin.HandlerFunc {
 						}
 						repMsg += "\n總計: $ " + fmt.Sprintf("%d", totalPrice) + "\n"
 						if totalPrice == 0 {
-							repMsg = "購物車是空的"
+							repMsg = cartIsEmpty
 						}
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
@@ -168,6 +163,13 @@ func GetAtomyProducts() gin.HandlerFunc {
 			"success": events,
 		})
 	}
+}
+
+func newCarouselColumn(imageURL, title, text string, actionLabel string, actionText string) *linebot.CarouselColumn {
+	return linebot.NewCarouselColumn(
+		imageURL, title, text,
+		linebot.NewMessageAction(actionLabel, actionText),
+	)
 }
 
 func getAllProducts() []model.Products {
