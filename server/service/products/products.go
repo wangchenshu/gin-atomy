@@ -191,45 +191,47 @@ func getProductLike(name string) model.Products {
 	return product
 }
 
+func newMessageAction(label string, text string) *linebot.MessageAction {
+	return linebot.NewMessageAction(label, text)
+}
+
 func myMenuTemplate() *linebot.ButtonsTemplate {
 	imageURL := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E8%89%BE%E4%B8%8D%E9%87%8B%E6%89%8B%E7%B6%93%E5%85%B8%E7%B3%BB%E5%88%97.jpg?alt=media&token=ebbb8e46-6d86-4229-9e29-67b4858ea0d1"
+	title := "艾多美新品 Go Bot 1.0 "
+	text := "只要輸入 艾多美新品名稱"
+	messageSlices := []string{"艾多美 艾不釋手經典系列", "艾多美 托特包", "艾多美 物理性防曬膏", "艾多美 新春紅包袋"}
+	template := []linebot.TemplateAction{}
+
+	for _, v := range messageSlices {
+		template = append(template, newMessageAction(v, v))
+	}
+
 	menuTemplate := linebot.NewButtonsTemplate(
-		imageURL, "艾多美新品 Go Bot 1.0 ", "只要輸入 艾多美新品名稱",
-		linebot.NewMessageAction("艾多美 艾不釋手經典系列", "艾多美 艾不釋手經典系列"),
-		linebot.NewMessageAction("艾多美 托特包", "艾多美 托特包"),
-		linebot.NewMessageAction("艾多美 物理性防曬膏", "艾多美 物理性防曬膏"),
-		linebot.NewMessageAction("艾多美 新春紅包袋", "艾多美 新春紅包袋"),
+		imageURL, title, text, template...,
 	)
 
 	return menuTemplate
 }
 func myQuickReply() linebot.SendingMessage {
-	imageURL1 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9"
-	imageURL2 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c"
-	imageURL3 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b"
-	imageURL4 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b"
+	content := "快速選單"
+	imageURLs := []string{
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c",
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b",
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
+	}
+	labels := []string{"查看購物車", "過年團購", "香烤海苔(小片裝)", "幸福堅果", "好纖果乾", "清除購物車"}
+	quickReplyButtons := []*linebot.QuickReplyButton{}
 
-	quickReply := linebot.NewTextMessage("快速選單").
-		WithQuickReplies(linebot.NewQuickReplyItems(
-			linebot.NewQuickReplyButton(
-				imageURL4,
-				linebot.NewMessageAction("查看購物車", "查看購物車")),
-			linebot.NewQuickReplyButton(
-				imageURL1,
-				linebot.NewMessageAction("查看團購商品", "過年團購")),
-			linebot.NewQuickReplyButton(
-				imageURL1,
-				linebot.NewMessageAction("香烤海苔(小片裝)", "香烤海苔(小片裝)")),
-			linebot.NewQuickReplyButton(
-				imageURL2,
-				linebot.NewMessageAction("幸福堅果", "幸福堅果")),
-			linebot.NewQuickReplyButton(
-				imageURL3,
-				linebot.NewMessageAction("好纖果乾", "好纖果乾")),
-			linebot.NewQuickReplyButton(
-				imageURL4,
-				linebot.NewMessageAction("清除購物車", "清除購物車")),
+	for k, v := range labels {
+		quickReplyButtons = append(quickReplyButtons, linebot.NewQuickReplyButton(
+			imageURLs[k], linebot.NewMessageAction(v, v),
 		))
+	}
+	quickReply := linebot.NewTextMessage(content).
+		WithQuickReplies(linebot.NewQuickReplyItems(quickReplyButtons...))
 
 	return quickReply
 }
