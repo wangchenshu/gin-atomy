@@ -34,9 +34,11 @@ func GetAtomyProducts() gin.HandlerFunc {
 		for _, event := range events {
 			switch event.Type {
 			case linebot.EventTypeMessage:
-				imageURL1 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9"
-				imageURL2 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c"
-				imageURL3 := "https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b"
+				imageURLs := []string{
+					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
+					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c",
+					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b",
+				}
 
 				profile, err := myBot.GetProfile(event.Source.UserID).Do()
 				if err != nil {
@@ -69,15 +71,16 @@ func GetAtomyProducts() gin.HandlerFunc {
 						groupBuyNames := []string{"香烤海苔(小片裝)", "幸福堅果", "好纖果乾"}
 						wannaBuyStr := "我想+1"
 						altText := "團購人氣商品"
-						products_1 := getProductLike(groupBuyNames[0])
-						products_2 := getProductLike(groupBuyNames[1])
-						products_3 := getProductLike(groupBuyNames[2])
+						arouselColumns := []*linebot.CarouselColumn{}
 
-						template := linebot.NewCarouselTemplate(
-							newCarouselColumn(imageURL1, products_1.Name, products_1.Price, wannaBuyStr, "+1,"+groupBuyNames[0]),
-							newCarouselColumn(imageURL2, products_2.Name, products_2.Price, wannaBuyStr, "+1,"+groupBuyNames[1]),
-							newCarouselColumn(imageURL3, products_3.Name, products_3.Price, wannaBuyStr, "+1,"+groupBuyNames[2]),
-						)
+						for k, _ := range groupBuyNames {
+							product := getProductLike(groupBuyNames[k])
+							arouselColumns = append(arouselColumns,
+								newCarouselColumn(imageURLs[k], product.Name, product.Price, wannaBuyStr, "+1,"+groupBuyNames[k]),
+							)
+						}
+						template := linebot.NewCarouselTemplate(arouselColumns...)
+
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
 							linebot.NewTemplateMessage(altText, template),
