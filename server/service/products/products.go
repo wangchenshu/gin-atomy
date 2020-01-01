@@ -34,12 +34,6 @@ func GetAtomyProducts() gin.HandlerFunc {
 		for _, event := range events {
 			switch event.Type {
 			case linebot.EventTypeMessage:
-				imageURLs := []string{
-					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
-					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%B9%B8%E7%A6%8F%E5%A0%85%E6%9E%9C.jpg?alt=media&token=9f409ba8-5508-46f2-8420-b74eff83258c",
-					"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b",
-				}
-
 				profile, err := myBot.GetProfile(event.Source.UserID).Do()
 				if err != nil {
 					log.Print(err)
@@ -77,9 +71,10 @@ func GetAtomyProducts() gin.HandlerFunc {
 							product := getProductLike(groupBuyNames[k])
 							arouselColumns = append(arouselColumns,
 								newCarouselColumn(
-									imageURLs[k],
+									// imageURLs[k],
+									product.Pic,
 									product.Name,
-									product.Price,
+									"$ "+product.Price+" PV: "+product.Point,
 									wannaBuyStr,
 									"+1,"+groupBuyNames[k],
 								),
@@ -159,8 +154,249 @@ func GetAtomyProducts() gin.HandlerFunc {
 						).Do(); err != nil {
 							log.Print(err)
 						}
+					case "flextest":
+						contents := &linebot.BubbleContainer{
+							Type: linebot.FlexContainerTypeBubble,
+							Body: &linebot.BoxComponent{
+								Type:   linebot.FlexComponentTypeBox,
+								Layout: linebot.FlexBoxLayoutTypeHorizontal,
+								Contents: []linebot.FlexComponent{
+									&linebot.TextComponent{
+										Type: linebot.FlexComponentTypeText,
+										Text: "Hello,",
+									},
+									&linebot.TextComponent{
+										Type: linebot.FlexComponentTypeText,
+										Text: "World!",
+									},
+								},
+							},
+						}
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							linebot.NewFlexMessage("Flex message alt text", contents),
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
+					case "flextest2":
+						contents := &linebot.CarouselContainer{
+							Type: linebot.FlexContainerTypeCarousel,
+							Contents: []*linebot.BubbleContainer{
+								{
+									Type: linebot.FlexContainerTypeBubble,
+									Body: &linebot.BoxComponent{
+										Type:   linebot.FlexComponentTypeBox,
+										Layout: linebot.FlexBoxLayoutTypeVertical,
+										Contents: []linebot.FlexComponent{
+											&linebot.TextComponent{
+												Type: linebot.FlexComponentTypeText,
+												Text: "First bubble",
+											},
+										},
+									},
+								},
+								{
+									Type: linebot.FlexContainerTypeBubble,
+									Body: &linebot.BoxComponent{
+										Type:   linebot.FlexComponentTypeBox,
+										Layout: linebot.FlexBoxLayoutTypeVertical,
+										Contents: []linebot.FlexComponent{
+											&linebot.TextComponent{
+												Type: linebot.FlexComponentTypeText,
+												Text: "Second bubble",
+											},
+										},
+									},
+								},
+							},
+						}
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							linebot.NewFlexMessage("Flex message alt text", contents),
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
+					case "flexjson":
+						jsonString := `{
+							"type": "bubble",
+							"hero": {
+							  "type": "image",
+							  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
+							  "size": "full",
+							  "aspectRatio": "20:13",
+							  "aspectMode": "cover",
+							  "action": {
+								"type": "uri",
+								"uri": "http://linecorp.com/"
+							  }
+							},
+							"body": {
+							  "type": "box",
+							  "layout": "vertical",
+							  "contents": [
+								{
+								  "type": "text",
+								  "text": "Brown Cafe",
+								  "weight": "bold",
+								  "size": "xl"
+								},
+								{
+								  "type": "box",
+								  "layout": "baseline",
+								  "margin": "md",
+								  "contents": [
+									{
+									  "type": "icon",
+									  "size": "sm",
+									  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+									},
+									{
+									  "type": "icon",
+									  "size": "sm",
+									  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+									},
+									{
+									  "type": "icon",
+									  "size": "sm",
+									  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+									},
+									{
+									  "type": "icon",
+									  "size": "sm",
+									  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+									},
+									{
+									  "type": "icon",
+									  "size": "sm",
+									  "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gray_star_28.png"
+									},
+									{
+									  "type": "text",
+									  "text": "4.0",
+									  "size": "sm",
+									  "color": "#999999",
+									  "margin": "md",
+									  "flex": 0
+									}
+								  ]
+								},
+								{
+								  "type": "box",
+								  "layout": "vertical",
+								  "margin": "lg",
+								  "spacing": "sm",
+								  "contents": [
+									{
+									  "type": "box",
+									  "layout": "baseline",
+									  "spacing": "sm",
+									  "contents": [
+										{
+										  "type": "text",
+										  "text": "Place",
+										  "color": "#aaaaaa",
+										  "size": "sm",
+										  "flex": 1
+										},
+										{
+										  "type": "text",
+										  "text": "Miraina Tower, 4-1-6 Shinjuku, Tokyo",
+										  "wrap": true,
+										  "color": "#666666",
+										  "size": "sm",
+										  "flex": 5
+										}
+									  ]
+									},
+									{
+									  "type": "box",
+									  "layout": "baseline",
+									  "spacing": "sm",
+									  "contents": [
+										{
+										  "type": "text",
+										  "text": "Time",
+										  "color": "#aaaaaa",
+										  "size": "sm",
+										  "flex": 1
+										},
+										{
+										  "type": "text",
+										  "text": "10:00 - 23:00",
+										  "wrap": true,
+										  "color": "#666666",
+										  "size": "sm",
+										  "flex": 5
+										}
+									  ]
+									}
+								  ]
+								}
+							  ]
+							},
+							"footer": {
+							  "type": "box",
+							  "layout": "vertical",
+							  "spacing": "sm",
+							  "contents": [
+								{
+								  "type": "button",
+								  "style": "link",
+								  "height": "sm",
+								  "action": {
+									"type": "uri",
+									"label": "CALL",
+									"uri": "https://linecorp.com"
+								  }
+								},
+								{
+								  "type": "button",
+								  "style": "link",
+								  "height": "sm",
+								  "action": {
+									"type": "uri",
+									"label": "WEBSITE",
+									"uri": "https://linecorp.com",
+									"altUri": {
+									  "desktop": "https://line.me/ja/download"
+									}
+								  }
+								},
+								{
+								  "type": "spacer",
+								  "size": "sm"
+								}
+							  ],
+							  "flex": 0
+							}
+						  }`
+						contents, err := linebot.UnmarshalFlexMessageJSON([]byte(jsonString))
+						if err != nil {
+							log.Print(err)
+						}
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							linebot.NewFlexMessage("Flex message alt text", contents),
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
+					case "喜好測試":
+						template := linebot.NewConfirmTemplate(
+							"喜愛艾多美貼布?",
+							linebot.NewMessageAction("是", "Like,艾多美貼布"),
+							linebot.NewMessageAction("否", "NoLike,艾多美貼布"),
+						)
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							linebot.NewTemplateMessage("喜好測試", template),
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
 					default:
-						// repMsg := "艾多美商品: \n\n"
 						wannaBuyStr := "我想+1"
 						products := getProductsLike(message.Text, 10)
 						arouselColumns := []*linebot.CarouselColumn{}
@@ -170,16 +406,11 @@ func GetAtomyProducts() gin.HandlerFunc {
 
 						if len(products) > 0 {
 							for _, product := range products {
-								// repMsg += "名稱: " + product.Name + "\n"
-								// repMsg += "價格: " + product.Price + "\n"
-								// repMsg += "PV: " + product.Point + "\n"
-								// fmt.Println(product.Pic)
 								arouselColumns = append(arouselColumns,
 									newCarouselColumn(
-										// imageURLs[k],
 										product.Pic,
 										product.Name,
-										product.Price,
+										"$ "+product.Price+" PV: "+product.Point,
 										wannaBuyStr,
 										"+1,"+product.Name,
 									),
@@ -187,34 +418,17 @@ func GetAtomyProducts() gin.HandlerFunc {
 							}
 							template = linebot.NewCarouselTemplate(arouselColumns...)
 							templateMessage = linebot.NewTemplateMessage("您想找的商品", template)
+						} else {
+							templateMessage = linebot.NewTemplateMessage("請輸入商品關鍵字", myMenuTemplate())
 						}
 
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							// linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
-							// linebot.NewTextMessage(repMsg),
 							templateMessage,
 							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
-						// repMsg := "艾多美商品: \n\n"
-						// products := getProductsLike(message.Text, 10)
-
-						// for _, product := range products {
-						// 	repMsg += "名稱: " + product.Name + "\n"
-						// 	repMsg += "價格: " + product.Price + "\n"
-						// 	repMsg += "PV: " + product.Point + "\n"
-						// }
-
-						// if _, err := myBot.ReplyMessage(
-						// 	event.ReplyToken,
-						// 	linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
-						// 	linebot.NewTextMessage(repMsg),
-						// 	myQuickReply(),
-						// ).Do(); err != nil {
-						// 	log.Print(err)
-						// }
 					}
 				case *linebot.ImageMessage:
 					log.Print(message)
@@ -290,6 +504,7 @@ func myMenuTemplate() *linebot.ButtonsTemplate {
 
 	return menuTemplate
 }
+
 func myQuickReply() linebot.SendingMessage {
 	content := "快速選單或輸入商品關鍵字"
 	imageURLs := []string{
@@ -301,7 +516,7 @@ func myQuickReply() linebot.SendingMessage {
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b",
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
 	}
-	labels := []string{"查看購物車", "結帳", "過年團購", "香烤海苔(小片裝)", "幸福堅果", "好纖果乾", "清除購物車"}
+	labels := []string{"查看購物車", "結帳", "過年團購", "喜好測試", "幸福堅果", "好纖果乾", "清除購物車"}
 	quickReplyButtons := []*linebot.QuickReplyButton{}
 
 	for k, v := range labels {
