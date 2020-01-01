@@ -76,7 +76,13 @@ func GetAtomyProducts() gin.HandlerFunc {
 						for k, _ := range groupBuyNames {
 							product := getProductLike(groupBuyNames[k])
 							arouselColumns = append(arouselColumns,
-								newCarouselColumn(imageURLs[k], product.Name, product.Price, wannaBuyStr, "+1,"+groupBuyNames[k]),
+								newCarouselColumn(
+									imageURLs[k],
+									product.Name,
+									product.Price,
+									wannaBuyStr,
+									"+1,"+groupBuyNames[k],
+								),
 							)
 						}
 						template := linebot.NewCarouselTemplate(arouselColumns...)
@@ -125,23 +131,90 @@ func GetAtomyProducts() gin.HandlerFunc {
 								log.Print(err)
 							}
 						}
-					default:
-						repMsg := "艾多美商品: \n\n"
-						products := getProductsLike(message.Text, 10)
+					case "結帳":
+						carts := getCartsByUsername(profile.DisplayName)
+						repMsg := "明細如下: \n\n"
+						cartIsEmpty := "購物車是空的"
+						totalPrice := 0
 
-						for _, product := range products {
-							repMsg += "名稱: " + product.Name + "\n"
-							repMsg += "價格: " + product.Price + "\n"
-							repMsg += "PV: " + product.Point + "\n"
+						for _, cart := range carts {
+							cartQtyStr := fmt.Sprintf("%d", cart.Qty)
+							repMsg += cart.ProductName + ", 價格: $" + cart.Price + ", 數量: " + cartQtyStr + "\n"
+							cartPrice, err := strconv.ParseInt(cart.Price, 10, 64)
+							if err == nil {
+								fmt.Println(cartPrice)
+							}
+							totalPrice += int(cartPrice) * cart.Qty
 						}
+						repMsg += "\n總計: $ " + fmt.Sprintf("%d", totalPrice) + "\n"
+						repMsg += "結帳完成，請記得於時間內付款，謝謝您\n"
+						if totalPrice == 0 {
+							repMsg = cartIsEmpty
+						}
+						clearCarts(profile.DisplayName)
 						if _, err := myBot.ReplyMessage(
 							event.ReplyToken,
-							linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
 							linebot.NewTextMessage(repMsg),
 							myQuickReply(),
 						).Do(); err != nil {
 							log.Print(err)
 						}
+					default:
+						// repMsg := "艾多美商品: \n\n"
+						wannaBuyStr := "我想+1"
+						products := getProductsLike(message.Text, 10)
+						arouselColumns := []*linebot.CarouselColumn{}
+						var template *linebot.CarouselTemplate
+						var templateMessage *linebot.TemplateMessage
+						templateMessage = linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate())
+
+						if len(products) > 0 {
+							for _, product := range products {
+								// repMsg += "名稱: " + product.Name + "\n"
+								// repMsg += "價格: " + product.Price + "\n"
+								// repMsg += "PV: " + product.Point + "\n"
+								// fmt.Println(product.Pic)
+								arouselColumns = append(arouselColumns,
+									newCarouselColumn(
+										// imageURLs[k],
+										product.Pic,
+										product.Name,
+										product.Price,
+										wannaBuyStr,
+										"+1,"+product.Name,
+									),
+								)
+							}
+							template = linebot.NewCarouselTemplate(arouselColumns...)
+							templateMessage = linebot.NewTemplateMessage("您想找的商品", template)
+						}
+
+						if _, err := myBot.ReplyMessage(
+							event.ReplyToken,
+							// linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
+							// linebot.NewTextMessage(repMsg),
+							templateMessage,
+							myQuickReply(),
+						).Do(); err != nil {
+							log.Print(err)
+						}
+						// repMsg := "艾多美商品: \n\n"
+						// products := getProductsLike(message.Text, 10)
+
+						// for _, product := range products {
+						// 	repMsg += "名稱: " + product.Name + "\n"
+						// 	repMsg += "價格: " + product.Price + "\n"
+						// 	repMsg += "PV: " + product.Point + "\n"
+						// }
+
+						// if _, err := myBot.ReplyMessage(
+						// 	event.ReplyToken,
+						// 	linebot.NewTemplateMessage("只要輸入 艾多美新品名稱", myMenuTemplate()),
+						// 	linebot.NewTextMessage(repMsg),
+						// 	myQuickReply(),
+						// ).Do(); err != nil {
+						// 	log.Print(err)
+						// }
 					}
 				case *linebot.ImageMessage:
 					log.Print(message)
@@ -184,14 +257,14 @@ func getAllProducts() []model.Products {
 
 func getProductsLike(name string, limit int) []model.Products {
 	products := []model.Products{}
-	db.Db.Where("name LIKE ?", "%"+name+"%").Limit(limit).Find(&products)
+	db.Db.Where("name LIKE ? AND pic != ?", "%"+name+"%", "NULL").Limit(limit).Find(&products)
 
 	return products
 }
 
 func getProductLike(name string) model.Products {
 	product := model.Products{}
-	db.Db.Where("name LIKE ?", "%"+name+"%").First(&product)
+	db.Db.Where("name LIKE ? AND pic != ?", "%"+name+"%", "NULL").First(&product)
 
 	return product
 }
@@ -218,8 +291,9 @@ func myMenuTemplate() *linebot.ButtonsTemplate {
 	return menuTemplate
 }
 func myQuickReply() linebot.SendingMessage {
-	content := "快速選單"
+	content := "快速選單或輸入商品關鍵字"
 	imageURLs := []string{
+		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E6%B5%B7%E8%8B%94%E7%A6%AE%E7%9B%92.jpg?alt=media&token=4e1e859f-fae6-41de-86f4-94a506c3a2a9",
@@ -227,7 +301,7 @@ func myQuickReply() linebot.SendingMessage {
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E5%A5%BD%E7%BA%96%E6%9E%9C%E4%B9%BE.jpg?alt=media&token=6e892755-4e05-4f3b-881b-c127e059a24b",
 		"https://firebasestorage.googleapis.com/v0/b/atomy-bot.appspot.com/o/%E8%89%BE%E5%A4%9A%E7%BE%8E%20%E7%89%A9%E7%90%86%E6%80%A7%E9%98%B2%E6%9B%AC%E8%86%8F.jpg?alt=media&token=e659398b-c5a5-4e0e-ae91-614633d2355b",
 	}
-	labels := []string{"查看購物車", "過年團購", "香烤海苔(小片裝)", "幸福堅果", "好纖果乾", "清除購物車"}
+	labels := []string{"查看購物車", "結帳", "過年團購", "香烤海苔(小片裝)", "幸福堅果", "好纖果乾", "清除購物車"}
 	quickReplyButtons := []*linebot.QuickReplyButton{}
 
 	for k, v := range labels {

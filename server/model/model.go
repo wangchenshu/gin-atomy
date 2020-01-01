@@ -15,6 +15,7 @@ type Products struct {
 	Name  string `json:"name" gorm:"type:varchar(255)"`
 	Price string `json:"price" gorm:"type:varchar(100)"`
 	Point string `json:"point" gorm:"type:varchar(100)"`
+	Pic   string `json:"pic" gorm:"longtext"`
 }
 
 // Carts
