@@ -18,6 +18,7 @@ import (
 
 var myBot = mylinebot.Init()
 
+// GetAtomyProducts -
 func GetAtomyProducts() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		events, err := myBot.ParseRequest(context.Request)
@@ -67,16 +68,16 @@ func GetAtomyProducts() gin.HandlerFunc {
 						altText := "團購人氣商品"
 						arouselColumns := []*linebot.CarouselColumn{}
 
-						for k, _ := range groupBuyNames {
-							product := getProductLike(groupBuyNames[k])
+						for _, v := range groupBuyNames {
+							product := getProductLike(v)
+							actionLabel := fmt.Sprintf("$ %s PV: %s", product.Price, product.Point)
 							arouselColumns = append(arouselColumns,
 								newCarouselColumn(
-									// imageURLs[k],
 									product.Pic,
 									product.Name,
-									"$ "+product.Price+" PV: "+product.Point,
+									actionLabel,
 									wannaBuyStr,
-									"+1,"+groupBuyNames[k],
+									"+1,"+product.Name,
 								),
 							)
 						}
@@ -406,11 +407,12 @@ func GetAtomyProducts() gin.HandlerFunc {
 
 						if len(products) > 0 {
 							for _, product := range products {
+								actionLabel := fmt.Sprintf("$ %s PV: %s", product.Price, product.Point)
 								arouselColumns = append(arouselColumns,
 									newCarouselColumn(
 										product.Pic,
 										product.Name,
-										"$ "+product.Price+" PV: "+product.Point,
+										actionLabel,
 										wannaBuyStr,
 										"+1,"+product.Name,
 									),
@@ -471,14 +473,14 @@ func getAllProducts() []model.Products {
 
 func getProductsLike(name string, limit int) []model.Products {
 	products := []model.Products{}
-	db.Db.Where("name LIKE ? AND pic != ?", "%"+name+"%", "NULL").Limit(limit).Find(&products)
+	db.Db.Where("name LIKE ?", "%"+name+"%").Limit(limit).Find(&products)
 
 	return products
 }
 
 func getProductLike(name string) model.Products {
 	product := model.Products{}
-	db.Db.Where("name LIKE ? AND pic != ?", "%"+name+"%", "NULL").First(&product)
+	db.Db.Where("name LIKE ?", "%"+name+"%").First(&product)
 
 	return product
 }
@@ -559,12 +561,14 @@ func clearCarts(username string) bool {
 	return true
 }
 
+// GetProducts -
 func GetProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, getAllProducts())
 	}
 }
 
+// GetProductsLike -
 func GetProductsLike(name string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, getProductsLike(name, 100))
